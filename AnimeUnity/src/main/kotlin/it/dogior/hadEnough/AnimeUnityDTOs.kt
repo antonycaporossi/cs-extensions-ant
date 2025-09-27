@@ -70,7 +70,7 @@ data class ApiResponse(
 
 data class Anime(
     @JsonProperty("id") val id: Int,
-    @JsonProperty("user_id") val userId: Int,
+//    @JsonProperty("user_id") val userId: Int,
     @JsonProperty("title") val title: String?,
     @JsonProperty("imageurl") val imageUrl: String,
     @JsonProperty("plot") val plot: String,
@@ -78,20 +78,20 @@ data class Anime(
     @JsonProperty("episodes_count") val episodesCount: Int,
     @JsonProperty("episodes_length") val episodesLength: Int,
     @JsonProperty("status") val status: String,
-    @JsonProperty("imageurl_cover") val imageUrlCover: String?,
+//    @JsonProperty("imageurl_cover") val imageUrlCover: String?,
     @JsonProperty("type") val type: String,
     @JsonProperty("slug") val slug: String,
     @JsonProperty("title_eng") val titleEng: String?,
-    @JsonProperty("day") val day: String?,
+//    @JsonProperty("day") val day: String?,
     @JsonProperty("score") val score: String?,
-    @JsonProperty("studio") val studio: String,
+//    @JsonProperty("studio") val studio: String,
     @JsonProperty("dub") val dub: Int,
-    @JsonProperty("always_home") val alwaysHome: Int,
+//    @JsonProperty("always_home") val alwaysHome: Int,
     @JsonProperty("cover") val cover: String?,
-    @JsonProperty("anilist_id") val anilistId: Int,
-    @JsonProperty("season") val season: String?,
+    @JsonProperty("anilist_id") val anilistId: Int?,
+//    @JsonProperty("season") val season: String,
     @JsonProperty("title_it") val titleIt: String?,
-    @JsonProperty("mal_id") val malId: Int,
+    @JsonProperty("mal_id") val malId: Int?,
     @JsonProperty("episodes") val episodes: List<Episode>?,
     @JsonProperty("genres") val genres: List<Genre>
 )
@@ -112,10 +112,7 @@ data class Episode(
 data class AnimeInfo(
     @JsonProperty("id") val id: Int,
     @JsonProperty("name") val name: String?,
-    /*
-        "slug" deprecated because is not present anymore in the api json
-     */
-    //@JsonProperty("slug") val slug: String,
+//    @JsonProperty("slug") val slug: String,
     @JsonProperty("episodes_count") val episodesCount: Int,
     @JsonProperty("current_episode") val currentEpisode: Int,
     @JsonProperty("episodes") val episodes: List<Episode>
@@ -124,45 +121,6 @@ data class AnimeInfo(
 data class Genre(
     @JsonProperty("id") val id: Int,
     @JsonProperty("name") val name: String
-)
-
-data class Script(
-    @JsonProperty("video") val videoInfo: SourceFile,
-    @JsonProperty("streams") val servers: List<Server>,
-    @JsonProperty("masterPlaylist") val masterPlaylist: MasterPlaylist,
-    @JsonProperty("canPlayFHD") val canPlayFHD: Boolean
-)
-
-data class MasterPlaylist(
-    @JsonProperty("params") val params: Params,
-    @JsonProperty("url") val url: String
-) {
-    data class Params(
-        @JsonProperty("token") val token: String,
-        @JsonProperty("expires") val expires: String
-    )
-}
-
-data class Server(
-    @JsonProperty("name") val name: String,
-    @JsonProperty("active") val active: Boolean,
-    @JsonProperty("url") val url: String
-)
-
-data class SourceFile(
-    val id: Int,
-    val name: String,
-    val filename: String?,
-    val size: Int,
-    val quality: Int,
-    val duration: Int,
-    val views: Int,
-    val is_viewable: Int,
-    val status: String,
-    val fps: Float?,
-    val legacy: Int,
-    val folder_id: String,
-    val created_at_diff: String
 )
 
 data class AnilistResponse(
@@ -184,4 +142,3 @@ data class AnilistCoverImage(
     @JsonProperty("large") val large: String?,
     @JsonProperty("extraLarge") val extraLarge: String?
 )
-

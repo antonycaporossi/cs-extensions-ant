@@ -1,7 +1,6 @@
 package com.lagradost
 
 import com.lagradost.api.Log
-import com.lagradost.cloudstream3.AnimeSearchResponse
 import com.lagradost.cloudstream3.DubStatus
 import com.lagradost.cloudstream3.HomePageList
 import com.lagradost.cloudstream3.HomePageResponse
@@ -26,7 +25,6 @@ import com.lagradost.cloudstream3.newAnimeSearchResponse
 import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
-import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.Locale
@@ -42,16 +40,16 @@ class AnimeUnity : MainAPI() {
     override var supportedTypes = setOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
     override var lang = "it"
     override val hasMainPage = true
-    override val hasQuickSearch: Boolean = true
 
     companion object {
-        val mainUrl = "https://www.animeunity.so"
+        @Suppress("ConstPropertyName")
+        const val mainUrl = "https://www.animeunity.so"
         var name = "AnimeUnity"
         var headers = mapOf(
             "Host" to mainUrl.toHttpUrl().host,
             "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
         ).toMutableMap()
-        var cookies = emptyMap<String, String>()
+//        var cookies = emptyMap<String, String>()
     }
 
     private val sectionNamesList = mainPageOf(
@@ -71,26 +69,28 @@ class AnimeUnity : MainAPI() {
         val response = app.get("$mainUrl/archivio", headers = headers)
 
         val csrfToken = response.document.head().select("meta[name=csrf-token]").attr("content")
+        val cookies =
+            "XSRF-TOKEN=${response.cookies["XSRF-TOKEN"]}; animeunity_session=${response.cookies["animeunity_session"]}"
         val h = mapOf(
             "X-Requested-With" to "XMLHttpRequest",
             "Content-Type" to "application/json;charset=utf-8",
             "X-CSRF-Token" to csrfToken,
-            "Referer" to "https://www.animeunity.to/archivio",
-            "Referer" to "https://www.animeunity.to"
+            "Referer" to mainUrl,
+            "Cookie" to cookies
         )
         headers.putAll(h)
-        cookies = response.cookies
 //        // Log.d("$TAG:setup", "Headers: $headers")
 
     }
 
     private fun resetHeadersAndCookies() {
-        if(headers.isNotEmpty()) {
+        if (headers.isNotEmpty()) {
             headers.clear()
         }
         headers["Host"] = Companion.mainUrl.toHttpUrl().host
-        headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
-        cookies = emptyMap()
+        headers["User-Agent"] =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
+//        cookies = emptyMap()
     }
 
     private suspend fun searchResponseBuilder(objectList: List<Anime>): List<SearchResponse> {
@@ -115,7 +115,7 @@ class AnimeUnity : MainAPI() {
         }
     }
 
-    private suspend fun getImage(imageUrl: String?, anilistId: Int): String {
+    private suspend fun getImage(imageUrl: String?, anilistId: Int?): String? {
         // First try the direct image URL if available
         if (!imageUrl.isNullOrEmpty()) {
             try {
@@ -127,7 +127,8 @@ class AnimeUnity : MainAPI() {
         }
 
         // Fallback to Anilist
-        return getAnilistPoster(anilistId)
+
+        return anilistId?.let { getAnilistPoster(it) }
     }
 
     private suspend fun getAnilistPoster(anilistId: Int): String {
@@ -160,7 +161,7 @@ class AnimeUnity : MainAPI() {
 //        val localTag = "$TAG:MainPage"
 
         val url = request.data + "get-animes"
-        if (cookies.isEmpty()) {
+        if (!headers.contains("Cookie")) {
             resetHeadersAndCookies()
             setupHeadersAndCookies()
         }
@@ -178,10 +179,13 @@ class AnimeUnity : MainAPI() {
 
 
         val response =
-            app.post(url, headers = headers, cookies = cookies, requestBody = requestBody)
+            app.post(url, headers = headers, requestBody = requestBody)
+
+        val body = response.text
+//        Log.d("$TAG:body", body)
 
 //        // Log.d(localTag, "Cookies: ${response.cookies}")
-        val responseObject = parseJson<ApiResponse>(response.text)
+        val responseObject = parseJson<ApiResponse>(body)
         val titles = responseObject.titles
 //        // Log.d(localTag, "Titles: $titles")
 
@@ -219,10 +223,6 @@ class AnimeUnity : MainAPI() {
     }
 
 
-    override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
-
-    // This function gets called when you search for something also
-    //This is to get Title,Href,Posters for Homepage
     override suspend fun search(query: String): List<SearchResponse> {
 //        val localTag = "$TAG:search"
         val url = "$mainUrl/archivio/get-animes"
@@ -232,7 +232,7 @@ class AnimeUnity : MainAPI() {
 
         val requestBody = RequestData(title = query, dubbed = 0).toRequestBody()
         val response =
-            app.post(url, headers = headers, cookies = cookies, requestBody = requestBody)
+            app.post(url, headers = headers, requestBody = requestBody)
 
         val responseObject = parseJson<ApiResponse>(response.text)
         val titles = responseObject.titles
@@ -281,7 +281,7 @@ class AnimeUnity : MainAPI() {
                 }
 
                 val infoUrl =
-                    "https://www.animeunity.to/info_api/${anime.id}/1?start_range=${1 + (i - 1) * 120}&end_range=${endRange}"
+                    "$mainUrl/info_api/${anime.id}/1?start_range=${1 + (i - 1) * 120}&end_range=${endRange}"
                 val info = app.get(infoUrl).text
                 val animeInfo = parseJson<AnimeInfo>(info)
                 episodes.addAll(animeInfo.episodes.map {
@@ -300,7 +300,8 @@ class AnimeUnity : MainAPI() {
                 url = "$mainUrl/anime/${it.id}-${it.slug}",
                 type = if (it.type == "TV") TvType.Anime
                 else if (it.type == "Movie" || it.episodesCount == 1) TvType.AnimeMovie
-                else TvType.OVA){
+                else TvType.OVA
+            ) {
                 addDubStatus(it.dub == 1 || relatedTitle.contains("(ITA)"))
                 addPoster(poster)
             }
@@ -349,9 +350,9 @@ class AnimeUnity : MainAPI() {
         if (imageUrl.isNotEmpty()) {
             try {
                 val fileName = imageUrl.substringAfterLast("/")
-                return "https://img.animeunity.so/anime/$fileName"
+                val cdnHost = mainUrl.toHttpUrl().host.replace("www", "img")
+                return "https://$cdnHost/anime/$fileName"
             } catch (_: Exception) {
-                // Fallback to Anilist if direct image fails
             }
         }
         return imageUrl
@@ -366,16 +367,14 @@ class AnimeUnity : MainAPI() {
         callback: (ExtractorLink) -> Unit,
     ): Boolean {
 //        val localTag = "$TAG:loadLinks"
-        // Log.d(localTag, "Url : $data")
+//         Log.d(localTag, "Url : $data")
 
         val document = app.get(data).document
 
         val sourceUrl = document.select("video-player").attr("embed_url")
-//        // Log.d(localTag, "Document: $document")
-        // Log.d(localTag, "Iframe: $sourceUrl")
-
-
-        AnimeUnityExtractor().getUrl(
+//         Log.d(localTag, "Document: $document")
+//         Log.d(localTag, "Iframe: $sourceUrl")
+        VixCloudExtractor().getUrl(
             url = sourceUrl,
             referer = mainUrl,
             subtitleCallback = subtitleCallback,
