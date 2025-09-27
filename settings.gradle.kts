@@ -19,7 +19,7 @@ include(
     //"IlGenioDelloStreamingProvider",
     //"OnlineSerieTV",
     //"SoraItalianStream",
-    "StreamingcommunityProvider",
+    "Streamingcommunity",
     //"TantiFilmProvider",
     "ToonItalia",
     "ToonItaliaXYZ",
