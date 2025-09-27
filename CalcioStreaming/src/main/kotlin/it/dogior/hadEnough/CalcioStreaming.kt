@@ -1,6 +1,6 @@
 package com.lagradost
 
-import com.lagradost.api.Log
+import android.util.Log
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.network.CloudflareKiller
 import com.lagradost.cloudstream3.utils.*
@@ -11,7 +11,7 @@ import org.jsoup.nodes.Document
 
 class CalcioStreaming : MainAPI() {
     override var lang = "it"
-    override var mainUrl = "https://direttecommunity.gratis"
+    override var mainUrl = "https://free.direttecommunity.online/"
     override var name = "CalcioStreaming"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -20,23 +20,28 @@ class CalcioStreaming : MainAPI() {
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
         val document = app.get("$mainUrl/partite-streaming.html").document
-        val sections = document.select("div.slider-title").filter {it -> it.select("div.item").isNotEmpty()}
+        val sections =
+            document.select("div.slider-title").filter { it -> it.select("div.slider-tile-inner").isNotEmpty() }
 
         if (sections.isEmpty()) throw ErrorLoadingException()
+        Log.d("teest", "OK")
 
-        return HomePageResponse(sections.map { it ->
-            val categoryName = it.selectFirst("h2 > strong")!!.text()
-            val shows = it.select("div.item").map {
+        return newHomePageResponse(sections.map { it ->
+            val categoryName = it.selectFirst(".row-header .header-wrap .label")!!.text()
+            val shows = it.select(".slider-tile-inner").map {
                 val href = it.selectFirst("a")!!.attr("href")
-                val name = it.selectFirst("a > div > h1")!!.text()
-                val posterUrl = fixUrl(it.selectFirst("a > img")!!.attr("src"))
-                newLiveSearchResponse(
-                    name,
-                    href,
-                    TvType.Live
-                ){
+                val name = ""//it.selectFirst("a > div > h1")!!.text()
+                val posterUrl = fixUrl(it.selectFirst("img")!!.attr("src"))
+                newLiveSearchResponse(name, href, TvType.Live) {
                     this.posterUrl = posterUrl
                 }
+//                LiveSearchResponse(
+//                    name,
+//                    href,
+//                    this@CalcioStreaming.name,
+//                    TvType.Live,
+//                    posterUrl,
+//                )
             }
             HomePageList(
                 categoryName,
@@ -52,20 +57,30 @@ class CalcioStreaming : MainAPI() {
     override suspend fun load(url: String): LoadResponse {
 
         val document = app.get(url).document
-        val poster =  fixUrl(document.select("#title-single > div").attr("style").substringAfter("url(").substringBeforeLast(")"))
-        val matchStart = document.select("div.info-wrap > div").textNodes().joinToString("").trim()
+        val poster = fixUrl(
+            document.select(".background-image.bg-image").attr("style").substringAfter("url(")
+                .substringBeforeLast(")")
+        )
+        val matchStart = document.select(".info-wrap .info-span .desc")?.first()?.text()
         return newLiveStreamLoadResponse(
-            document.selectFirst(" div.info-t > h1")!!.text(),
+            document.selectFirst(" .info-wrap > h1")!!.text(),
             url,
-            url
+            url,
         ) {
             this.posterUrl = poster
             this.plot = matchStart
-            this.contentRating = "18+"
         }
+//        LiveStreamLoadResponse(
+//            document.selectFirst(" div.info-t > h1")!!.text(),
+//            url,
+//            this.name,
+//            url,
+//            poster,
+//            plot = matchStart
+//        )
     }
 
-    private fun getStreamUrl(document: Document) : String? {
+    private fun getStreamUrl(document: Document): String? {
         val scripts = document.body().select("script")
         val obfuscatedScript = scripts.findLast { it.data().contains("eval(") }
         val script = obfuscatedScript?.let { getAndUnpack(it.data()) } ?: return null
@@ -92,13 +107,14 @@ class CalcioStreaming : MainAPI() {
                 oldLink = link
                 val streamUrl = getStreamUrl(newPage)
                 Log.d("CalcioStreaming", "Url: $streamUrl")
-                if (newPage.select("script").size >= 6 && streamUrl != null){
+                if (newPage.select("script").size >= 6 && streamUrl != null) {
                     videoNotFound = false
                     callback(
                         newExtractorLink(
                             source = this.name,
                             name = button.text(),
-                            url = streamUrl
+                            url = streamUrl,
+                            type = ExtractorLinkType.M3U8
                         ) {
                             this.quality = 0
                             this.referer = fixUrl(link)
@@ -121,7 +137,7 @@ class CalcioStreaming : MainAPI() {
     }
 
     override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
-        return object :Interceptor{
+        return object : Interceptor {
             override fun intercept(chain: Interceptor.Chain): Response {
                 val response = cfKiller.intercept(chain)
                 return response
