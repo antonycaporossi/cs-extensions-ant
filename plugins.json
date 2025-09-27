@@ -1,0 +1,257 @@
+[
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/AltadefinizioneProvider.cs3",
+        "status": 1,
+        "version": 10,
+        "name": "AltadefinizioneProvider",
+        "internalName": "AltadefinizioneProvider",
+        "authors": [
+            "Antony"
+        ],
+        "fileSize": 16426,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "Movie"
+        ],
+        "iconUrl": "https://www.google.com/s2/favicons?domain=altadefinizione.tienda&sz=%size%",
+        "apiVersion": 1,
+        "fileHash": "sha256-4112673b89c3ed8f940ea1d458030ceb68472ee7642a3a72721df6554b74f223"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/AnimeSaturnProvider.cs3",
+        "status": 1,
+        "version": 9,
+        "name": "AnimeSaturnProvider",
+        "internalName": "AnimeSaturnProvider",
+        "authors": [
+            
+        ],
+        "fileSize": 22541,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "Anime",
+            "AnimeMovie"
+        ],
+        "iconUrl": "https://www.google.com/s2/favicons?domain=www.animesaturn.cc&sz=%size%",
+        "apiVersion": 1,
+        "fileHash": "sha256-907841eb32ef625be69c75680ed645f6b6303e14f767114ff820192ef296c20b"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/AnimeUnity.cs3",
+        "status": 1,
+        "version": 15,
+        "name": "AnimeUnity",
+        "internalName": "AnimeUnity",
+        "authors": [
+            "doGior"
+        ],
+        "description": "Anime from AnimeUnity",
+        "fileSize": 39763,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "AnimeMovie",
+            "Anime",
+            "OVA"
+        ],
+        "iconUrl": "https://www.animeunity.to/apple-touch-icon.png",
+        "apiVersion": 1,
+        "fileHash": "sha256-3516ad595d7d6086a22c9971469dcc3b5b84bc31262ce28245df1b94180b6c48"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/AnimeWorldProvider.cs3",
+        "status": 1,
+        "version": 16,
+        "name": "AnimeWorldProvider",
+        "internalName": "AnimeWorldProvider",
+        "authors": [
+            "Gian-Fr",
+            "doGior"
+        ],
+        "description": "Anime from AnimeWorld. This plugin is a fork of the AnimeWorld plugin in the ItalianProvider repo",
+        "fileSize": 41240,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "AnimeMovie",
+            "Anime",
+            "OVA"
+        ],
+        "iconUrl": "https://static.animeworld.so/assets/images/favicon/android-icon-192x192.png?s",
+        "apiVersion": 1,
+        "fileHash": "sha256-2eae5c5010a8e47ecb4cb8b0a7b7f16261e2e1b89d0626b659a29b8b6cf8858e"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/CalcioStreaming.cs3",
+        "status": 1,
+        "version": 14,
+        "name": "CalcioStreaming",
+        "internalName": "CalcioStreaming",
+        "authors": [
+            "Gian-Fr",
+            "Adippe",
+            "doGior"
+        ],
+        "description": "\u26a0\ufe0fUse AdGuard DNS in the app settings\u26a0\ufe0f Live streams from the CalcioStreaming. Forked from the CalcioStreaming plugin in the ItalianProvider repo",
+        "fileSize": 28700,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "Live"
+        ],
+        "iconUrl": "https://corner.direttecommunity.online/assets/icons/apple-touch-icon.png",
+        "apiVersion": 1,
+        "fileHash": "sha256-30e8628536bbd851d82197d566a0824c97b2e8aade142445afa0b9dca176d8ce"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/CasaCinemaProvider.cs3",
+        "status": 1,
+        "version": 8,
+        "name": "CasaCinemaProvider",
+        "internalName": "CasaCinemaProvider",
+        "authors": [
+            "Forthe"
+        ],
+        "fileSize": 17387,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "TvSeries",
+            "Movie"
+        ],
+        "iconUrl": "https://www.google.com/s2/favicons?domain=casacinema.lol&sz=%size%",
+        "apiVersion": 1,
+        "fileHash": "sha256-d57cb2ddc03f90e79e2d59e62ee7e6d88269f92772a8b6c39460500e745c3bf0"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/CineBlog01Provider.cs3",
+        "status": 1,
+        "version": 4,
+        "name": "CineBlog01Provider",
+        "internalName": "CineBlog01Provider",
+        "authors": [
+            "Adippe"
+        ],
+        "fileSize": 10979,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "TvSeries",
+            "Movie"
+        ],
+        "iconUrl": "https://www.google.com/s2/favicons?domain=cineblog01.legal&sz=%size%",
+        "apiVersion": 1,
+        "fileHash": "sha256-e4e4cb02c1d457452d33e121393323f4e33d3615ee9c77d9a56681c5ec5af261"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/GuardaSerieProvider.cs3",
+        "status": 1,
+        "version": 9,
+        "name": "GuardaSerieProvider",
+        "internalName": "GuardaSerieProvider",
+        "authors": [
+            "Adippe"
+        ],
+        "fileSize": 13103,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "TvSeries",
+            "Movie"
+        ],
+        "iconUrl": "https://www.google.com/s2/favicons?domain=guardaserie.golf&sz=%size%",
+        "apiVersion": 1,
+        "fileHash": "sha256-30ee1787460df0ff77efa6063c8ebeca8ccc173363ecea0d693d7cbfd2955f91"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/StreamingCommunity.cs3",
+        "status": 1,
+        "version": 870,
+        "name": "StreamingCommunity",
+        "internalName": "StreamingCommunity",
+        "authors": [
+            "doGior"
+        ],
+        "description": "TV Shows and Movies from StreamingCommunity (now StreamingUnity)",
+        "fileSize": 46520,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "TvSeries",
+            "Movie",
+            "Documentary",
+            "Cartoon"
+        ],
+        "iconUrl": "https://streamingunity.co/apple-touch-icon.png?v=2",
+        "apiVersion": 1,
+        "fileHash": "sha256-32533c56b8f96ae566c03288dcac9becf2cdbabb1cc15f529a174a196ef990ce"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/ThisNotBusiness.cs3",
+        "status": 1,
+        "version": 3,
+        "name": "ThisNotBusiness",
+        "internalName": "ThisNotBusiness",
+        "authors": [
+            "AC"
+        ],
+        "description": "Live streams from the Thisnot.business",
+        "fileSize": 19400,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "Live"
+        ],
+        "iconUrl": "https://www.calciostreaming.cool/templates/calciostreaming1/images/icons/apple-touch-icon.png",
+        "apiVersion": 1,
+        "fileHash": "sha256-ff71460dc6ab2359429bf6183f9bbc3e1199df045e13136d06ae897f0c4d7ca1"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/ToonItalia.cs3",
+        "status": 1,
+        "version": 7,
+        "name": "ToonItalia",
+        "internalName": "ToonItalia",
+        "authors": [
+            "doGior"
+        ],
+        "description": "Movies, TV Shows and Anime from ToonItalia.green",
+        "fileSize": 19935,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "Cartoon",
+            "TvSeries",
+            "Movie",
+            "Anime"
+        ],
+        "iconUrl": "https://toonitalia.green/wp-content/uploads/2023/08/favicon.ico",
+        "apiVersion": 1,
+        "fileHash": "sha256-fbf3998f7d8b2cca02275fa454fac842d031037c99548289bafeb69a21413a3f"
+    },
+    {
+        "url": "https://raw.githubusercontent.com/antonycaporossi/cs-extensions-ant/builds/ToonItaliaXYZ.cs3",
+        "status": 1,
+        "version": 2,
+        "name": "ToonItaliaXYZ",
+        "internalName": "ToonItaliaXYZ",
+        "authors": [
+            "Antony"
+        ],
+        "description": "Movies, TV Shows and Anime from ToonItalia.xyz",
+        "fileSize": 21909,
+        "repositoryUrl": "https://github.com/antonycaporossi/cs-extensions-ant",
+        "language": "it",
+        "tvTypes": [
+            "Cartoon",
+            "TvSeries",
+            "Movie",
+            "Anime"
+        ],
+        "iconUrl": "https://toonitalia.xyz/wp-content/uploads/2023/08/cropped-Majintoon-32x32.jpg",
+        "apiVersion": 1,
+        "fileHash": "sha256-b7b5039b9b8f33e4daf9ed1ea234d61d402af9d934ac8e0abd4db337ea0ee04c"
+    }
+]
