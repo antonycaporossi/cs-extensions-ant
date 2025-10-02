@@ -1,5 +1,5 @@
 // use an integer for version numbers
-version = 64
+version = 65
 
 
 cloudstream {
@@ -26,5 +26,5 @@ cloudstream {
     requiresResources = false
     language = "it"
 
-    iconUrl = "https://streamingunity.to/apple-touch-icon.png?v=2"
+    iconUrl = "https://streamingunity.co/apple-touch-icon.png?v=2"
 }
