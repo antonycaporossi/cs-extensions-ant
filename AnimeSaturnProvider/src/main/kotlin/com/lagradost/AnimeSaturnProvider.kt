@@ -5,7 +5,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addAniListId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
 import com.lagradost.cloudstream3.LoadResponse.Companion.addMalId
-import com.lagradost.cloudstream3.LoadResponse.Companion.addRating
+import com.lagradost.cloudstream3.LoadResponse.Companion.addScore
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
@@ -165,7 +165,7 @@ class AnimeSaturnProvider : MainAPI() {
             }
             list.add(HomePageList(tabName, results))
         }
-        return HomePageResponse(list)
+        return newHomePageResponse(list)
     }
 
     override suspend fun quickSearch(query: String): List<SearchResponse>? {
@@ -240,7 +240,7 @@ class AnimeSaturnProvider : MainAPI() {
             this.tags = tags
             this.showStatus = getStatus(status)
             addPoster(posterUrl)
-            addRating(score)
+            addScore(score)
             addEpisodes(if (isDubbed) DubStatus.Dubbed else DubStatus.Subbed, episodes)
             addMalId(malId)
             addAniListId(aniListId)

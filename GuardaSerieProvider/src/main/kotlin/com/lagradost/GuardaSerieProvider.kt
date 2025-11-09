@@ -2,7 +2,7 @@
 package com.lagradost
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.addRating
+import com.lagradost.cloudstream3.LoadResponse.Companion.addScore
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.CommonActivity.showToast
@@ -96,7 +96,7 @@ class GuardaSerieProvider : MainAPI() {
             TvType.TvSeries,
             episodeList
         ) {
-            addRating(rating)
+            addScore(rating)
             this.plot = description
             this.year = year
             this.posterUrl = poster

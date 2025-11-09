@@ -2,7 +2,7 @@ package com.lagradost
 
 //import androidx.core.text.parseAsHtml
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.addRating
+import com.lagradost.cloudstream3.LoadResponse.Companion.addScore
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
@@ -126,7 +126,7 @@ class FilmpertuttiProvider : MainAPI() {
                 this.posterUrl = poster
                 this.year = year
                 this.plot = description
-                addRating(rating)
+                addScore(rating)
                 addTrailer(trailerurl)
             }
         } else {
@@ -141,7 +141,7 @@ class FilmpertuttiProvider : MainAPI() {
                 posterUrl = fixUrlNull(poster)
                 this.year = year
                 this.plot = description
-                addRating(rating)
+                addScore(rating)
                 addTrailer(trailerurl)
 
             }

@@ -2,7 +2,7 @@
 package com.lagradost
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.addRating
+import com.lagradost.cloudstream3.LoadResponse.Companion.addScore
 import com.lagradost.cloudstream3.MainAPI
 import com.lagradost.cloudstream3.SearchResponse
 import com.lagradost.cloudstream3.TvType
@@ -16,7 +16,7 @@ import org.jsoup.nodes.Element
 import android.util.Log
 
 class CasaCinemaProvider : MainAPI() { // all providers must be an instance of MainAPI
-    override var mainUrl = "https://casacinema.world/"
+    override var mainUrl = "https://casacinema.lat"
     override var name = "CasaCinema"
     override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries)
     override val hasChromecastSupport = true
@@ -100,7 +100,7 @@ class CasaCinemaProvider : MainAPI() { // all providers must be an instance of M
             ?.substringAfter(",")
             ?.filter { it.isDigit() }
         val poster = fixUrl(document.selectFirst("img.thumbnail")?.attr("src") ?: throw ErrorLoadingException("No Poster found"))
-        val rating = document.selectFirst("div.rating>div.value")?.text()?.trim()?.toRatingInt()
+        val rating = document.selectFirst("div.rating>div.value")?.text()?.trim()?.toString()
         val recomm = document.select("div.crp_related>ul>li").map { it.toRecommendResult() }
         if (type == TvType.TvSeries) {
             val episodeList =
@@ -122,7 +122,7 @@ class CasaCinemaProvider : MainAPI() { // all providers must be an instance of M
                 this.plot = description
                 this.recommendations = recomm
                 addPoster(poster)
-                addRating(rating)
+                addScore(rating)
             }
         } else {
             val actors: List<ActorData> =
@@ -139,7 +139,7 @@ class CasaCinemaProvider : MainAPI() { // all providers must be an instance of M
                 this.actors = actors
                 this.recommendations = recomm
                 addPoster(poster)
-                addRating(rating)
+                addScore(rating)
             }
         }
     }

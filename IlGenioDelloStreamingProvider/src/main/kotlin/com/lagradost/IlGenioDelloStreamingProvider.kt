@@ -4,7 +4,7 @@ package com.lagradost
 
 import android.util.Log
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.addRating
+import com.lagradost.cloudstream3.LoadResponse.Companion.addScore
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.MainAPI
 import com.lagradost.cloudstream3.SearchResponse
@@ -164,7 +164,7 @@ class IlGenioDelloStreamingProvider : MainAPI() {
                 this.plot = description
                 this.recommendations = recomm
                 addPoster(poster)
-                addRating(rating)
+                addScore(rating)
                 addTrailer(trailer)
             }
         } else {
@@ -182,7 +182,7 @@ class IlGenioDelloStreamingProvider : MainAPI() {
                 this.actors = actors
                 this.recommendations = recomm
                 addPoster(poster)
-                addRating(rating)
+                addScore(rating)
                 addTrailer(trailer)
             }
         }

@@ -2,7 +2,7 @@ package com.lagradost
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
-import com.lagradost.cloudstream3.LoadResponse.Companion.addRating
+import com.lagradost.cloudstream3.LoadResponse.Companion.addScore
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
@@ -16,7 +16,7 @@ import com.lagradost.cloudstream3.network.CloudflareKiller
 
 class AltadefinizioneProvider : MainAPI() {
     override var lang = "it"
-    override var mainUrl = "https://altadefinizione.free"
+    override var mainUrl = "https://altadefinizionegratis.news"
     override var name = "Altadefinizione"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -70,7 +70,7 @@ class AltadefinizioneProvider : MainAPI() {
                 Log.d("teest", "error")
                 throw ErrorLoadingException()
             }
-            return HomePageResponse(items, hasNext = true)
+            return newHomePageResponse(items, hasNext = true)
         /*val soup = app.get(mainUrl).document
         val items: List<HomePageList> = soup.select("main section:not(.slider)").mapNotNull { section ->
             val name = section.selectFirst(".section-head h4")?.text()
@@ -162,7 +162,7 @@ class AltadefinizioneProvider : MainAPI() {
                 addPoster(poster)
                 this.year = year
                 this.plot = description
-                addRating(rating)
+                addScore(rating)
                 this.tags = tags
                 addTrailer(trailerUrl)
             }

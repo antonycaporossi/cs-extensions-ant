@@ -5,7 +5,7 @@ import com.lagradost.cloudstream3.Episode
 import com.lagradost.cloudstream3.HomePageList
 import com.lagradost.cloudstream3.HomePageResponse
 import com.lagradost.cloudstream3.LoadResponse
-import com.lagradost.cloudstream3.LoadResponse.Companion.addRating
+import com.lagradost.cloudstream3.LoadResponse.Companion.addScore
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.MainAPI
 import com.lagradost.cloudstream3.MainPageRequest
@@ -197,7 +197,7 @@ class OnlineSerieTV : MainAPI() {
             val plot = response.select(".post > p:nth-child(16)").text().trim()
             newMovieLoadResponse(title, url, TvType.Movie, streamUrl) {
                 addPoster(url = poster, headers = interceptor.getCookieHeaders(url).toMap())
-                addRating(rating)
+                addScore(rating)
                 this.duration = duration.toIntOrNull()
                 this.year = year.toIntOrNull()
                 this.tags = genres.split(",")
@@ -208,7 +208,7 @@ class OnlineSerieTV : MainAPI() {
             val plot = response.select(".post > p:nth-child(17)").text().trim()
             newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
                 addPoster(url = poster, headers = interceptor.getCookieHeaders(url).toMap())
-                addRating(rating)
+                addScore(rating)
                 this.year = year.toIntOrNull()
                 this.tags = genres.split(",")
                 this.plot = plot
