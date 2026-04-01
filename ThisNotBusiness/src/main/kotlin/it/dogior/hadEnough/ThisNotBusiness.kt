@@ -18,66 +18,116 @@ class ThisNotBusiness : MainAPI() {
     override val supportedTypes = setOf(TvType.Live)
     val cfKiller = CloudflareKiller()
 
+    private val password = "2025"
+    private var loggedIn = false
+
+    // POST login a /index.php, i cookie (PHPSESSID) vengono gestiti automaticamente da app
+    private suspend fun ensureLogin() {
+        if (loggedIn) return
+        app.get("$mainUrl/index.php") // ottieni PHPSESSID
+        app.post(
+            "$mainUrl/index.php",
+            data = mapOf("password" to password, "submit" to ""),
+            headers = mapOf(
+                "content-type" to "application/x-www-form-urlencoded",
+                "origin" to mainUrl,
+                "referer" to "$mainUrl/index.php"
+            )
+        )
+        loggedIn = true
+        Log.d("ThisNotBusiness", "Login effettuato")
+    }
+
+    private fun resolveLink(link: String): String = when {
+        link.startsWith("http") -> link
+        link.startsWith("/") -> "$mainUrl$link"
+        else -> "$mainUrl/$link"
+    }
+
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+        ensureLogin()
 
         val responseText = app.get("$mainUrl/api/eventi.json").text
-        val data = JSONObject(responseText)
-        val events = data.getJSONArray("eventi")
+        val root = JSONObject(responseText)
+        val events = root.getJSONArray("eventi")
 
-        // Raggruppa per competizione mantenendo l'ordine
+        // Raggruppa per competizione mantenendo l'ordine di arrivo
         val groups = linkedMapOf<String, MutableList<SearchResponse>>()
 
         for (i in 0 until events.length()) {
             val event = events.getJSONObject(i)
-            val link = event.optString("link", "").trim()
-            if (link.isBlank()) continue
-
-            val fullLink = when {
-                link.startsWith("http") -> link
-                link.startsWith("/") -> "$mainUrl$link"
-                else -> "$mainUrl/$link"
-            }
-
             val competition = event.optString("competizione", "Altri eventi")
             val eventName = event.optString("evento", "")
-            val channel = event.optString("canale", "")
             val time = event.optString("orario", "")
             val emoji = event.optString("emoji", "")
             val logo = event.optString("logo", "")
+
+            val hasCanali = event.has("canali") && event.getJSONArray("canali").length() > 0
+
+            // Dati serializzati che passiamo a load() / loadLinks()
+            val dataUrl: String
+            val channelLabel: String
+
+            if (hasCanali) {
+                val canali = event.getJSONArray("canali")
+                // Serializza i canali per trasportarli fino a loadLinks()
+                dataUrl = JSONObject().apply {
+                    put("type", "canali")
+                    put("canali", canali)
+                }.toString()
+                channelLabel = (0 until canali.length())
+                    .mapNotNull {
+                        canali.getJSONObject(it).optString("canale", "").takeIf { c -> c.isNotBlank() }
+                    }
+                    .joinToString(" / ").ifBlank { "Multi-sorgente" }
+            } else {
+                val rawLink = event.optString("link", "").trim()
+                if (rawLink.isBlank()) continue
+                dataUrl = resolveLink(rawLink)
+                channelLabel = event.optString("canale", "")
+            }
 
             val displayName = buildString {
                 if (emoji.isNotBlank()) append("$emoji ")
                 if (eventName.isNotBlank()) append(eventName)
                 if (time.isNotBlank()) append(" ($time)")
-                if (channel.isNotBlank()) append(" - $channel")
+                if (channelLabel.isNotBlank()) append(" - $channelLabel")
             }.trim()
 
-            val searchResponse = newLiveSearchResponse(displayName, fullLink, TvType.Live) {
-                this.posterUrl = logo.takeIf { it.isNotBlank() }
-            }
-
-            groups.getOrPut(competition) { mutableListOf() }.add(searchResponse)
+            groups.getOrPut(competition) { mutableListOf() }.add(
+                newLiveSearchResponse(displayName, dataUrl, TvType.Live) {
+                    this.posterUrl = logo.takeIf { it.isNotBlank() }
+                }
+            )
         }
 
         if (groups.isEmpty()) throw ErrorLoadingException()
 
-        return newHomePageResponse(groups.map { (category, shows) ->
-            HomePageList(category, shows, isHorizontalImages = false)
+        return newHomePageResponse(groups.map { (cat, shows) ->
+            HomePageList(cat, shows, isHorizontalImages = false)
         })
     }
 
     override suspend fun load(url: String): LoadResponse {
-        val document = app.get(url).document
+        // Caso canali multipli: i dati sono JSON, non un URL
+        if (url.startsWith("{")) {
+            val data = JSONObject(url)
+            val canali = data.getJSONArray("canali")
+            val first = canali.optJSONObject(0)
+            val title = first?.optString("evento", name) ?: name
+            return newLiveStreamLoadResponse(title, url, url)
+        }
 
-        val title = document.selectFirst(".info-wrap > h1, h1")?.text()
+        // Caso link singolo: fetch della pagina per i metadati
+        val doc = app.get(url).document
+        val title = doc.selectFirst(".info-wrap > h1, h1")?.text()
             ?: url.substringAfterLast("/")
-        val posterStyle = document.selectFirst(".background-image[style]")?.attr("style") ?: ""
+        val posterStyle = doc.selectFirst(".background-image[style]")?.attr("style") ?: ""
         val poster = posterStyle
-            .substringAfter("url(", "")
-            .substringBefore(")", "")
+            .substringAfter("url(", "").substringBefore(")", "")
             .trim().trimStart('\'', '"').trimEnd('\'', '"')
             .let { if (it.isNotBlank()) fixUrl(it) else null }
-        val plot = document.selectFirst(".info-wrap .desc, .info-span .desc")?.text()
+        val plot = doc.selectFirst(".info-wrap .desc, .info-span .desc")?.text()
 
         return newLiveStreamLoadResponse(title, url, url) {
             this.posterUrl = poster
@@ -85,28 +135,23 @@ class ThisNotBusiness : MainAPI() {
         }
     }
 
-    // Tenta di estrarre l'URL del flusso da uno script p,a,c,k,e,d
-    private fun getStreamUrlFromScript(document: org.jsoup.nodes.Document): String? {
-        val scripts = document.body().select("script")
-        val packed = scripts.findLast { it.data().contains("eval(") } ?: return null
-        val unpacked = getAndUnpack(packed.data())
-        return unpacked
-            .substringAfter("var src=\"", "")
-            .substringBefore("\"", "")
-            .takeIf { it.isNotBlank() && (it.startsWith("http") || it.startsWith("//")) }
-    }
-
-    // Decodifica il parametro 'ck' (base64 JSON) per le chiavi ClearKey
+    // Decodifica il parametro 'ck' (base64) per ottenere la chiave ClearKey
+    // Formati supportati:
+    //   - base64("hex_kid:hex_key")          → diretto
+    //   - base64('{"keys":[{"kid":...}]}')    → JSON JWK
     private fun decodeKeys(ckParam: String): String? {
         return try {
             var clean = ckParam
             repeat((4 - clean.length % 4) % 4) { clean += "=" }
-            val decoded = Base64.decode(clean, Base64.URL_SAFE or Base64.DEFAULT)
-                .toString(Charsets.UTF_8)
+            val decoded = Base64.decode(clean, Base64.DEFAULT).toString(Charsets.UTF_8).trim()
 
-            val json = try {
-                JSONObject(decoded)
-            } catch (e: Exception) {
+            // Formato diretto: "hexkid:hexkey"
+            if (Regex("^[0-9a-fA-F]+:[0-9a-fA-F]+$").containsMatchIn(decoded)) {
+                return decoded
+            }
+
+            // Formato JSON
+            val json = try { JSONObject(decoded) } catch (e: Exception) {
                 return if (decoded.contains(":")) decoded else null
             }
 
@@ -119,11 +164,10 @@ class ThisNotBusiness : MainAPI() {
                     if (kid.isNotBlank() && kv.isNotBlank()) "$kid:$kv" else null
                 }.joinToString(",").takeIf { it.isNotBlank() }
             } else {
+                // Dizionario piatto { "kid": "key" }
                 json.keys().asSequence()
                     .filter { it.length > 10 }
-                    .mapNotNull { k ->
-                        json.optString(k).takeIf { it.isNotBlank() }?.let { "$k:$it" }
-                    }
+                    .mapNotNull { k -> json.optString(k).takeIf { it.isNotBlank() }?.let { "$k:$it" } }
                     .joinToString(",").takeIf { it.isNotBlank() }
             }
         } catch (e: Exception) {
@@ -132,54 +176,57 @@ class ThisNotBusiness : MainAPI() {
         }
     }
 
-    // Segue la catena iframe/script fino a trovare il flusso (max 4 hop)
-    private suspend fun extractStreamFromPage(
-        url: String,
-        referer: String,
+    // Fetch di una pagina evento → estrae lo stream dall'iframe
+    private suspend fun extractFromEventPage(
+        pageUrl: String,
         linkName: String,
-        callback: (ExtractorLink) -> Unit,
-        depth: Int = 0
+        callback: (ExtractorLink) -> Unit
     ) {
-        if (depth > 4) return
-        val fullUrl = when {
-            url.startsWith("//") -> "https:$url"
-            url.startsWith("/") -> "$mainUrl$url"
-            else -> url
+        val doc = app.get(pageUrl, referer = mainUrl).document
+
+        // Il player è un iframe con id/name "iframe"
+        val iframe = doc.selectFirst("iframe#iframe, iframe[name=iframe]") ?: run {
+            Log.w("ThisNotBusiness", "Nessun iframe trovato in $pageUrl")
+            return
+        }
+        val src = iframe.attr("src")
+        Log.d("ThisNotBusiness", "iframe src: $src")
+
+        // Il sito usa un wrapper chrome-extension: chrome-extension://xxx/player.html#<stream_url>
+        val streamUrl = when {
+            src.startsWith("chrome-extension://") && src.contains("#") ->
+                src.substringAfter("#")
+            src.startsWith("//") -> "https:$src"
+            src.startsWith("http") -> src
+            src.startsWith("/") -> "$mainUrl$src"
+            else -> {
+                Log.w("ThisNotBusiness", "src iframe non gestita: $src")
+                return
+            }
         }
 
-        val doc = app.get(fullUrl, referer = referer).document
+        // Estrai chiavi ClearKey dal parametro ck
+        val ck = try {
+            android.net.Uri.parse(streamUrl).getQueryParameter("ck")
+        } catch (e: Exception) { null }
+        val keys = ck?.let { decodeKeys(it) }
 
-        // 1. Cerca URL nel JS compresso (eval/packed)
-        val streamUrl = getStreamUrlFromScript(doc)
-        if (streamUrl != null) {
-            val resolvedUrl = if (streamUrl.startsWith("//")) "https:$streamUrl" else streamUrl
+        Log.d("ThisNotBusiness", "Stream: $streamUrl | keys: $keys")
 
-            val ck = try {
-                android.net.Uri.parse(resolvedUrl).getQueryParameter("ck")
-            } catch (e: Exception) { null }
-            val keys = ck?.let { decodeKeys(it) }
-
-            Log.d("ThisNotBusiness", "Stream trovato[$depth]: $resolvedUrl | keys=$keys")
-
-            callback(newExtractorLink(
+        callback(
+            newExtractorLink(
                 source = this.name,
                 name = linkName,
-                url = resolvedUrl,
-                type = if (resolvedUrl.contains(".mpd")) ExtractorLinkType.DASH else ExtractorLinkType.M3U8
+                url = streamUrl,
+                type = if (streamUrl.contains(".mpd")) ExtractorLinkType.DASH else ExtractorLinkType.M3U8
             ) {
                 this.quality = 0
-                this.referer = fullUrl
-                // Passa le chiavi ClearKey nell'header per i player che le supportano
+                this.referer = pageUrl
                 if (keys != null) {
                     this.headers = mapOf("clearkey" to keys)
                 }
-            })
-            return
-        }
-
-        // 2. Segui iframe
-        val iframeSrc = doc.selectFirst("iframe[src]")?.attr("src") ?: return
-        extractStreamFromPage(iframeSrc, fullUrl, linkName, callback, depth + 1)
+            }
+        )
     }
 
     override suspend fun loadLinks(
@@ -188,20 +235,24 @@ class ThisNotBusiness : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val document = app.get(data).document
-        val buttons = document.select("button.btn[data-link]")
+        ensureLogin()
 
-        if (buttons.isEmpty()) {
-            // Nessun bottone con link: prova direttamente sulla pagina evento
-            extractStreamFromPage(data, mainUrl, "Stream", callback)
-        } else {
-            buttons.forEach { button ->
-                val link = button.attr("data-link").trim()
-                if (link.isBlank()) return@forEach
-                val linkName = button.text().ifBlank { "Stream" }
-                extractStreamFromPage(link, data, linkName, callback)
+        if (data.startsWith("{")) {
+            // Canali multipli: ogni canale è una sorgente separata
+            val json = JSONObject(data)
+            val canali = json.getJSONArray("canali")
+            for (i in 0 until canali.length()) {
+                val canale = canali.getJSONObject(i)
+                val link = canale.optString("link", "").trim()
+                if (link.isBlank()) continue
+                val canaleName = canale.optString("canale", "Stream ${i + 1}")
+                extractFromEventPage(resolveLink(link), canaleName, callback)
             }
+        } else {
+            // Singolo link
+            extractFromEventPage(data, "Stream", callback)
         }
+
         return true
     }
 
