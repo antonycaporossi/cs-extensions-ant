@@ -14,7 +14,7 @@ import java.util.UUID
 
 class ThisNotBusiness : MainAPI() {
     override var lang = "it"
-    override var mainUrl = "https://www.thisnotbusiness.it"
+    override var mainUrl = "https://thisnot.business"
     override var name = "ThisNotBusiness"
     override val hasMainPage = true
     override val hasChromecastSupport = true
