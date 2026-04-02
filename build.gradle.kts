@@ -43,7 +43,7 @@ subprojects {
     }
 
     android {
-        namespace = "it.testingprivate"
+        namespace = "it.csextensionsant"
         defaultConfig {
             minSdk = 21
             compileSdkVersion(35)

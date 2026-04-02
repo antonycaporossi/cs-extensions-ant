@@ -1,6 +1,20 @@
-// use an integer for version numbers
-version = 
+@file:Suppress("UnstableApiUsage")
 
+import org.jetbrains.kotlin.konan.properties.Properties
+// use an integer for version numbers
+version = 2
+
+android {
+    buildFeatures {
+        buildConfig = true
+    }
+    defaultConfig {
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+
+        buildConfigField("String", "THISNOTBUSINESS_PASSWORD", "\"${properties.getProperty("THISNOTBUSINESS_PASSWORD")}\"")
+    }
+}
 
 cloudstream {
     language = "it"

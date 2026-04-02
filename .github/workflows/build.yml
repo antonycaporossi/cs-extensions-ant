@@ -1,6 +1,5 @@
 name: Build
 
-# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#concurrency
 concurrency: 
   group: "build"
   cancel-in-progress: true
@@ -8,7 +7,6 @@ concurrency:
 on:
   push:
     branches:
-      # choose your default branch
       - master
     paths-ignore:
       - '*.md'
@@ -32,13 +30,25 @@ jobs:
       - name: Clean old builds
         run: rm $GITHUB_WORKSPACE/builds/*.cs3 || true
 
-      - name: Setup JDK 12
-        uses: actions/setup-java@v1
+      - name: Setup JDK 17
+        uses: actions/setup-java@v5
         with:
           java-version: 17
+          distribution: adopt
+          cache: gradle
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3.2.2
+
+      - name: Access Secrets
+        env:
+          THISNOTBUSINESS_API: ${{ secrets.THISNOTBUSINESS_API }}
+          THISNOTBUSINESS_PASSWORD: ${{ secrets.THISNOTBUSINESS_PASSWORD }}
+        run: |
+          cd $GITHUB_WORKSPACE/src
+          echo THISNOTBUSINESS_API=$THISNOTBUSINESS_API >> local.properties
+          echo THISNOTBUSINESS_PASSWORD=$THISNOTBUSINESS_PASSWORD >> local.properties
+          # aggiungi qui le righe corrispondenti
 
       - name: Build Plugins
         run: |
@@ -54,5 +64,5 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git add .
-          git commit --amend -m "Build $GITHUB_SHA" || exit 0  # do not error if nothing to commit.
+          git commit --amend -m "Build $GITHUB_SHA" || exit 0
           git push --force

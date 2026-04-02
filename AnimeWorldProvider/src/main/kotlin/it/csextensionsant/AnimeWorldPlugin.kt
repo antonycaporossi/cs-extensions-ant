@@ -1,4 +1,4 @@
-package it.testingprivate
+package it.csextensionsant
 
 import com.lagradost.cloudstream3.plugins.CloudstreamPlugin
 import com.lagradost.cloudstream3.plugins.Plugin

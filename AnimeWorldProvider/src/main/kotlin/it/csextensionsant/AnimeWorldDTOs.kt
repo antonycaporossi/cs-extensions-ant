@@ -1,4 +1,4 @@
-package it.testingprivate
+package it.csextensionsant
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
