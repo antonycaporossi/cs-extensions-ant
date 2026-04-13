@@ -56,23 +56,30 @@ class StreamingCommunity : MainAPI() {
     }
 
     private val sectionNamesList = mainPageOf(
-        "$mainUrl/browse/top10" to "Top 10 di oggi",
-        "$mainUrl/browse/trending" to "I Titoli Del Momento",
-        "$mainUrl/browse/latest" to "Aggiunti di Recente",
-        "$mainUrl/browse/genre?g=Animation" to "Animazione",
-        "$mainUrl/browse/genre?g=Adventure" to "Avventura",
-        "$mainUrl/browse/genre?g=Action" to "Azione",
-        "$mainUrl/browse/genre?g=Comedy" to "Commedia",
-        "$mainUrl/browse/genre?g=Crime" to "Crime",
-        "$mainUrl/browse/genre?g=Documentary" to "Documentario",
-        "$mainUrl/browse/genre?g=Drama" to "Dramma",
-        "$mainUrl/browse/genre?g=Family" to "Famiglia",
-        "$mainUrl/browse/genre?g=Science Fiction" to "Fantascienza",
-        "$mainUrl/browse/genre?g=Fantasy" to "Fantasy",
-        "$mainUrl/browse/genre?g=Horror" to "Horror",
-        "$mainUrl/browse/genre?g=Reality" to "Reality",
-        "$mainUrl/browse/genre?g=Romance" to "Romance",
-        "$mainUrl/browse/genre?g=Thriller" to "Thriller",
+        "top10" to "Top 10 di oggi",
+        "trending" to "I Titoli Del Momento",
+        "latest" to "Aggiunti di Recente",
+        "genre|Animation" to "Animazione",
+        "genre|Adventure" to "Avventura",
+        "genre|Action" to "Azione",
+        "genre|Comedy" to "Commedia",
+        "genre|Crime" to "Crime",
+        "genre|Documentary" to "Documentario",
+        "genre|Drama" to "Dramma",
+        "genre|Family" to "Famiglia",
+        "genre|Fantasy" to "Fantasy",
+        "genre|Science Fiction" to "Fantascienza",
+        "genre|Sci-Fi & Fantasy" to "Sci-Fi & Fantasy",
+        "genre|Storia" to "Storia",
+        "genre|Horror" to "Horror",
+        "genre|Korean Drama" to "Korean Drama",
+        "genre|Mistero" to "Mistero",
+        "genre|Musica" to "Musica",
+        "genre|Reality" to "Reality",
+        "genre|Romance" to "Romance",
+        "genre|Soap" to "Soap",
+        "genre|Thriller" to "Thriller",
+        "genre|Western" to "Western",
     )
     override val mainPage = sectionNamesList
 
@@ -111,43 +118,25 @@ class StreamingCommunity : MainAPI() {
 
     //Get the Homepage
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        var url = mainUrl.substringBeforeLast("/") + "/api" +
-                request.data.substringAfter(mainUrl)
-        val params = mutableMapOf("lang" to "it")
+        val slidersFetchUrl = "${mainUrl.substringBeforeLast("/")}/api/sliders/fetch"
+        val params = mapOf("lang" to "it")
 
-        val section = request.data.substringAfterLast("/")
-        when (section) {
-            "trending" -> {
-//                Log.d(TAG, "TRENDING")
-            }
-
-            "latest" -> {
-//                Log.d(TAG, "LATEST")
-            }
-
-            "top10" -> {
-//                Log.d(TAG, "TOP10")
-            }
-
-            else -> {
-                val genere = url.substringAfterLast('=')
-                url = url.substringBeforeLast('?')
-                params["g"] = genere
-            }
+        val parts = request.data.split("|")
+        val sliderItem = if (parts.size == 2) {
+            SliderRequestItem(name = parts[0], genre = parts[1])
+        } else {
+            SliderRequestItem(name = parts[0])
         }
 
-        if (page > 0) {
-            params["offset"] = ((page - 1) * 60).toString()
-        }
-        val response = app.get(url, params = params)
+        val offset = if (page > 1) (page - 1) * 60 else null
+        val body = SlidersFetchBody(listOf(sliderItem.copy(offset = offset)))
+
+        val response = app.post(slidersFetchUrl, params = params, json = body)
         val responseString = response.body.string()
-        val responseJson = parseJson<Section>(responseString)
+        val sliders = parseJson<List<Slider>>(responseString)
 
-        val titlesList = searchResponseBuilder(responseJson.titles)
-
-        val hasNextPage =
-            response.okhttpResponse.request.url.queryParameter("offset")?.toIntOrNull()
-                ?.let { it < 120 } ?: true && titlesList.size == 60
+        val titlesList = searchResponseBuilder(sliders.firstOrNull()?.titles ?: emptyList())
+        val hasNextPage = titlesList.size == 60
 
         return newHomePageResponse(
             HomePageList(

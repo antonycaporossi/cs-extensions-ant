@@ -17,6 +17,16 @@ data class Section(
     @JsonProperty("titles") val titles: List<Title>,
 )
 
+data class SliderRequestItem(
+    @JsonProperty("name") val name: String,
+    @JsonProperty("genre") val genre: String? = null,
+    @JsonProperty("offset") val offset: Int? = null,
+)
+
+data class SlidersFetchBody(
+    @JsonProperty("sliders") val sliders: List<SliderRequestItem>,
+)
+
 data class SearchResponse(
     @JsonProperty("current_page") val currentPage: Int,
     @JsonProperty("data") val data: List<Title>,

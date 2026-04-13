@@ -1,8 +1,10 @@
-import com.lagradost.cloudstream3.gradle.CloudstreamExtension
-import com.android.build.gradle.BaseExtension
+import com.android.build.api.dsl.LibraryExtension
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.kotlin.dsl.register
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import com.lagradost.cloudstream3.gradle.CloudstreamExtension
+
 
 buildscript {
     repositories {
@@ -12,11 +14,17 @@ buildscript {
         maven("https://jitpack.io")
     }
 
+    configurations.all {
+        resolutionStrategy {
+            force("com.github.vidstige:jadb:9083b5096f")
+        }
+    }
+
     dependencies {
-        classpath("com.android.tools.build:gradle:8.13.2")
+        classpath("com.android.tools.build:gradle:9.1.0")
         // Cloudstream gradle plugin which makes everything work and builds plugins
         classpath("com.github.recloudstream:gradle:master-SNAPSHOT")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20")
     }
 }
 
@@ -30,11 +38,23 @@ allprojects {
 
 fun Project.cloudstream(configuration: CloudstreamExtension.() -> Unit) = extensions.getByName<CloudstreamExtension>("cloudstream").configuration()
 
-fun Project.android(configuration: BaseExtension.() -> Unit) = extensions.getByName<BaseExtension>("android").configuration()
+
+fun Project.android(configuration: LibraryExtension.() -> Unit) {
+    extensions.getByName<LibraryExtension>("android").apply {
+        project.extensions.findByType(JavaPluginExtension::class.java)?.apply {
+            // Use Java 17 toolchain even if a higher JDK runs the build.
+            // We still use Java 8 for now which higher JDKs have deprecated.
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+            }
+        }
+
+        configuration()
+    }
+}
 
 subprojects {
     apply(plugin = "com.android.library")
-    apply(plugin = "kotlin-android")
     apply(plugin = "com.lagradost.cloudstream3.gradle")
 
     cloudstream {
@@ -44,10 +64,10 @@ subprojects {
 
     android {
         namespace = "it.csextensionsant"
+        compileSdk = 36
+
         defaultConfig {
             minSdk = 21
-            compileSdkVersion(35)
-            targetSdk = 35
         }
 
         compileOptions {
@@ -61,7 +81,8 @@ subprojects {
                 freeCompilerArgs.addAll(
                     "-Xno-call-assertions",
                     "-Xno-param-assertions",
-                    "-Xno-receiver-assertions"
+                    "-Xno-receiver-assertions",
+                    "-Xannotation-default-target=param-property"
                 )
             }
         }
@@ -78,14 +99,14 @@ subprojects {
         // but you dont need to include any of them if you dont need them
         // https://github.com/recloudstream/cloudstream/blob/master/app/build.gradle
         implementation(kotlin("stdlib")) // adds standard kotlin features
-        implementation("com.github.Blatzar:NiceHttp:0.4.16") // http library
+        implementation("com.github.Blatzar:NiceHttp:0.4.17") // http library
         implementation("org.jsoup:jsoup:1.22.1") // html parser
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1")
         implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2") // html parser
 
         //run JS
-        implementation("org.mozilla:rhino:1.9.0")
+        implementation("org.mozilla:rhino:1.9.1")
 		    // Library/extensions searching with Levenshtein distance
         implementation ("me.xdrop:fuzzywuzzy:1.4.0")
     }
