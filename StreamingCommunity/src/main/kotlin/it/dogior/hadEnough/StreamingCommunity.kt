@@ -163,14 +163,13 @@ class StreamingCommunity : MainAPI() {
 
 
     override suspend fun search(query: String, page: Int): SearchResponseList {
-        val searchUrl = "${mainUrl.replace("/it", "")}/api/search"
-        val params = mutableMapOf("q" to query, "lang" to "it")
-        if (page > 0) {
-            params["offset"] = ((page - 1) * 60).toString()
-        }
-        val response = app.get(searchUrl, params = params, headers = headers).body.string()
+        val searchUrl = "${mainUrl}/search"
+        val params = mutableMapOf("lang" to "it", "q" to query, "query" to query, "page" to page.toString())
+        val response = app.get(searchUrl, params = params, headers = headers + mapOf("Accept" to "application/json")).body.string()
+        //Log.d("StreamingCommunity", "URL: ${response.okhttpResponse.request.url}")
         val result = parseJson<it.dogior.hadEnough.SearchResponse>(response)
-        val hasNext = (page < 3) || (page < result.lastPage)
+        val hasNext = page < result.lastPage
+        Log.d("StreamingCommunity", "$result.data")
         return newSearchResponseList(searchResponseBuilder(result.data), hasNext = hasNext)
     }
 
