@@ -14,11 +14,11 @@ buildscript {
         maven("https://jitpack.io")
     }
 
-    configurations.all {
+    /*configurations.all {
         resolutionStrategy {
             force("com.github.vidstige:jadb:9083b5096f")
         }
-    }
+    }*/
 
     dependencies {
         classpath("com.android.tools.build:gradle:9.1.0")
@@ -89,11 +89,12 @@ subprojects {
     }
 
     dependencies {
-        val apk by configurations
         val implementation by configurations
+        val cloudstream by configurations
+
 
         // Stubs for all Cloudstream classes
-        apk("com.lagradost:cloudstream3:pre-release")
+        cloudstream("com.lagradost:cloudstream3:pre-release")
 
         // these dependencies can include any of those which are added by the app,
         // but you dont need to include any of them if you dont need them
@@ -104,6 +105,7 @@ subprojects {
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1")
         implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2") // html parser
+        implementation("com.github.vidstige:jadb:v1.2.1")
 
         //run JS
         implementation("org.mozilla:rhino:1.9.1")
