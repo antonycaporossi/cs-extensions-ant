@@ -1,13 +1,14 @@
 package com.lagradost
 
-import android.util.Log
+import com.lagradost.api.Log
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.network.CloudflareKiller
 import com.lagradost.cloudstream3.utils.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.Response
-import org.jsoup.nodes.Document
+import org.json.JSONObject
+import kotlin.io.encoding.Base64
 
 class CalcioStreaming : MainAPI() {
     override var lang = "it"
@@ -16,112 +17,120 @@ class CalcioStreaming : MainAPI() {
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val supportedTypes = setOf(TvType.Live)
+    override var sequentialMainPage = true
     val cfKiller = CloudflareKiller()
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val document = app.get("$mainUrl/partite-streaming.html").document
+        val document = app.get(
+            "$mainUrl/partite-streaming.html"
+        ).document
         val sections =
-            document.select("div.slider-title").filter { it -> it.select("div.slider-tile-inner").isNotEmpty() }
-
+            document.select("div.slider-title")
+                .filter { it -> it.select("div.owl-carousel").isNotEmpty() }
         if (sections.isEmpty()) throw ErrorLoadingException()
-        Log.d("teest", "OK")
 
-        return newHomePageResponse(sections.map { it ->
-            val categoryName = it.selectFirst(".row-header .header-wrap .label")!!.text()
-            val shows = it.select(".slider-tile-inner").map {
+        return newHomePageResponse(sections.mapNotNull { it ->
+            val categoryName = it.selectFirst("div.header-wrap > div.label")!!.text()
+            val shows = it.select("div.owl-carousel > .slider-tile-inner > .box-16x9").map {
                 val href = it.selectFirst("a")!!.attr("href")
-                val name = ""//it.selectFirst("a > div > h1")!!.text()
-                val posterUrl = fixUrl(it.selectFirst("img")!!.attr("src"))
+                val name = it.selectFirst(".tile-title")?.text() ?: ""
+                val posterUrl = fixUrl(it.selectFirst("img.tile-image")!!.attr("src"))
+                    .replace("//uploads", "/uploads")
                 newLiveSearchResponse(name, href, TvType.Live) {
                     this.posterUrl = posterUrl
                 }
-//                LiveSearchResponse(
-//                    name,
-//                    href,
-//                    this@CalcioStreaming.name,
-//                    TvType.Live,
-//                    posterUrl,
-//                )
             }
+            if (shows.isEmpty()) return@mapNotNull null
             HomePageList(
                 categoryName,
                 shows,
                 isHorizontalImages = true
             )
-
-        })
+        }, false)
 
     }
 
 
     override suspend fun load(url: String): LoadResponse {
-
         val document = app.get(url).document
         val poster = fixUrl(
             document.select(".background-image.bg-image").attr("style").substringAfter("url(")
                 .substringBeforeLast(")")
         )
-        val matchStart = document.select(".info-wrap .info-span .desc")?.first()?.text()
-        return newLiveStreamLoadResponse(
-            document.selectFirst(" .info-wrap > h1")!!.text(),
-            url,
-            url,
-        ) {
+        val infoBlock = document.select(".info-wrap")
+//        val title = infoBlock.select("h1").text()
+        val title = document.selectFirst("meta[property=\"og:title\"]")?.attr("content") ?: ""
+        val description = document.select(".info-wrap .info-span .desc")?.first()?.text() ?: document.select(".match-time-cs1")?.first()?.text()
+        return newLiveStreamLoadResponse(name = title, url = url, dataUrl = url) {
             this.posterUrl = poster
-            this.plot = matchStart
+            this.plot = description
         }
-//        LiveStreamLoadResponse(
-//            document.selectFirst(" div.info-t > h1")!!.text(),
-//            url,
-//            this.name,
-//            url,
-//            poster,
-//            plot = matchStart
-//        )
     }
 
-    private fun getStreamUrl(document: Document): String? {
-        val scripts = document.body().select("script")
-        val obfuscatedScript = scripts.findLast { it.data().contains("eval(") }
-        val script = obfuscatedScript?.let { getAndUnpack(it.data()) } ?: return null
+    fun getStreamUrl(html: String): String? {
+        val configMatch = Regex("""window\._econfig\s*=\s*['"]([^'"]+)['"]""").find(html)
+            ?: return null
 
-        val url = script.substringAfter("var src=\"").substringBefore("\";")
-//        Log.d("CalcioStreaming", "Url: $url")
-        return url
-    }
+        return try {
+            val encodedConfig = configMatch.groupValues[1]
+            val decodedConfig =
+                Base64.decode(encodedConfig + "=".repeat((-encodedConfig.length % 4 + 4) % 4))
+                    .toString(Charsets.ISO_8859_1)
 
-    private suspend fun extractVideoLinks(
-        url: String,
-        callback: (ExtractorLink) -> Unit
-    ) {
-        val document = app.get(url).document
-        document.select("button.btn").forEach { button ->
-            var link = button.attr("data-link")
-            var oldLink = link
-            var videoNotFound = true
-            while (videoNotFound) {
-                if (link.toHttpUrlOrNull() == null) break
-                val doc = app.get(link).document
-                link = doc.selectFirst("iframe")?.attr("src") ?: break
-                val newPage = app.get(fixUrl(link), referer = oldLink).document
-                oldLink = link
-                val streamUrl = getStreamUrl(newPage)
-                Log.d("CalcioStreaming", "Url: $streamUrl")
-                if (newPage.select("script").size >= 6 && streamUrl != null) {
-                    videoNotFound = false
-                    callback(
-                        newExtractorLink(
-                            source = this.name,
-                            name = button.text(),
-                            url = streamUrl,
-                            type = ExtractorLinkType.M3U8
-                        ) {
-                            this.quality = 0
-                            this.referer = fixUrl(link)
-                        }
-                    )
-                }
+            val partOrder = listOf(2, 0, 3, 1)
+            val partLength = (decodedConfig.length + 3) / 4
+            val encodedParts = mutableListOf<String>()
+            var offset = 0
+
+            repeat(4) {
+                val part = decodedConfig.substring(
+                    offset,
+                    minOf(offset + partLength, decodedConfig.length)
+                )
+                offset += partLength
+                encodedParts.add(part.take(3) + part.drop(4))
             }
+
+            val decodedParts = Array(4) { "" }
+            encodedParts.forEachIndexed { index, part ->
+                val padded = part + "=".repeat((-part.length % 4 + 4) % 4)
+                decodedParts[partOrder[index]] = Base64.decode(padded)
+                    .toString(Charsets.ISO_8859_1)
+            }
+
+            val joinedConfig = decodedParts.joinToString("")
+            val configJson = Base64
+                .decode(joinedConfig + "=".repeat((-joinedConfig.length % 4 + 4) % 4))
+                .toString(Charsets.UTF_8)
+
+            val config = JSONObject(configJson)
+            config.optString("stream_url_nop2p").ifEmpty { null }
+                ?: config.optString("stream_url").ifEmpty { null }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private suspend fun extractVideoStream(
+        url: String,
+        ref: String,
+        n: Int
+    ): Pair<String, String>? {
+        if (url.toHttpUrlOrNull() == null) return null
+        if (n > 10) return null
+
+        val doc = app.get(url).document
+        val link = doc.selectFirst("iframe")?.attr("src") ?: return null
+        val newPage = app.get(
+            fixUrl(link), referer = ref, headers = mapOf(
+                "Sec-Fetch-Dest" to "iframe"
+            )
+        ).document
+        val streamUrl = getStreamUrl(newPage.toString())
+        return if (newPage.select("script").size >= 6 && !streamUrl.isNullOrEmpty()) {
+            streamUrl to fixUrl(link)
+        } else {
+            extractVideoStream(url = link, ref = url, n = n + 1)
         }
     }
 
@@ -132,7 +141,28 @@ class CalcioStreaming : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        extractVideoLinks(data, callback)
+        val document = app.get(data).document
+        val links = document.select("div.embed-container > div.langs > button").mapNotNull {
+            val lang = it.text()
+            val url = it.attr("data-link")
+            val link = extractVideoStream(url, url.substringBefore("channels"), 1)
+            if (link == null) return@mapNotNull null
+            Link(lang, link.first, link.second)
+        }
+        links.map {
+            Log.d("CalcioStreaming", it.toString())
+            callback(
+                newExtractorLink(
+                    source = this.name,
+                    name = it.lang,
+                    url = it.url,
+                    type = ExtractorLinkType.M3U8
+                ) {
+                    this.quality = 0
+                    this.referer = it.ref
+                }
+            )
+        }
         return true
     }
 
@@ -144,4 +174,10 @@ class CalcioStreaming : MainAPI() {
             }
         }
     }
+
+    data class Link(
+        val lang: String,
+        val url: String,
+        val ref: String
+    )
 }
