@@ -50,7 +50,7 @@ class StreamingCommunity : MainAPI() {
             "X-Inertia-Version" to inertiaVersion,
             "X-Requested-With" to "XMLHttpRequest",
         ).toMutableMap()
-        val mainUrl = "https://streamingcommunityz.tools/it"
+        val mainUrl = "https://streamingcommunityz.jetz/it"
         var name = "StreamingCommunity"
         val TAG = "SCommunity"
     }
