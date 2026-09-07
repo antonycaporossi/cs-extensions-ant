@@ -10,24 +10,15 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        // Shitpack repo which contains our tools and dependencies
         maven("https://jitpack.io")
     }
-
-    /*configurations.all {
-        resolutionStrategy {
-            force("com.github.vidstige:jadb:9083b5096f")
-        }
-    }*/
-
     dependencies {
         classpath("com.android.tools.build:gradle:9.1.0")
-        // Cloudstream gradle plugin which makes everything work and builds plugins
-        classpath("com.github.recloudstream:gradle:master-SNAPSHOT")
+        // Usa questa coordinata per il classpath:
+        classpath("com.github.recloudstream.gradle:gradle:-SNAPSHOT")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20")
     }
 }
-
 allprojects {
     repositories {
         google()

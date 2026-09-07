@@ -11,7 +11,7 @@ import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.getAndUnpack
 import java.io.File
 import org.jsoup.nodes.Element
-import java.util.Base64
+import android.util.Base64
 import java.io.FileOutputStream
 import org.json.JSONObject
 
@@ -101,10 +101,10 @@ class NewVoeExtractor : ExtractorApi() {
             return try {
                 val rot13 = debFunc1(input)
                 val cleaned = regexFunc(rot13).replace("_", "")
-                val base64Decoded1 = String(Base64.getDecoder().decode(cleaned))
+                val base64Decoded1 = String(Base64.decode(cleaned, Base64.DEFAULT))
                 val shifted = debFunc3(base64Decoded1, 3)
                 val reversed = shifted.reversed()
-                val base64Decoded2 = String(Base64.getDecoder().decode(reversed))
+                val base64Decoded2 = String(Base64.decode(reversed, Base64.DEFAULT))
                 
                 JSONObject(base64Decoded2)
             } catch (e: Exception) {
