@@ -38,7 +38,7 @@ jobs:
           cache: gradle
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3.2.2
+        uses: android-actions/setup-android@v4.0.1
 
       - name: Access Secrets
         env:
