@@ -16,7 +16,6 @@ class VixCloudExtractor : ExtractorApi() {
     override val requiresReferer = true
     private var referer: String? = null
     val TAG = "VixCloudExtractor"
-    private var referer: String? = null
     private val h = mutableMapOf(
         "Accept" to "*/*",
         "Connection" to "keep-alive",
@@ -75,6 +74,7 @@ class VixCloudExtractor : ExtractorApi() {
         Log.d(TAG, "Master Playlist URL: $masterPlaylistUrl")
         return masterPlaylistUrl
     }
+
 
     private suspend fun getScript(url: String): JSONObject {
         Log.d(TAG, "Item url: $url")
